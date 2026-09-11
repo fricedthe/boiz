@@ -3,140 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ﾄﾞ</title>
+    <title>カオス・シャドウ・コインクリッカー</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
         body { display: flex; height: 100vh; background: #121214; color: #e1e1e6; overflow: hidden; }
-        
-        /* 画面フィットのレイアウト構成 */
         #left-panel { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; border-right: 2px solid #29292e; background: #1a1a1e; padding: 20px; }
-        #right-panel { width: 420px; display: flex; flex-direction: column; background: #121214; height: 100vh; }
+        #right-panel { width: 420px; display: flex; flex-direction: column; background: #121214; }
         
-        /* 左上管理ゾーン */
-        #control-zone { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 10px; z-index: 10; border: 1px solid #29292e; width: 220px; }
-        .control-item { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 10px; font-size: 0.85rem; }
+        /* コントロールゾーン（オートクリッカー、コード、リバース） */
+        #control-zone { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 10px; background: rgba(0,0,0,0.4); padding: 15px; border-radius: 8px; z-index: 10; border: 1px solid #29292e; width: 220px; }
+        .control-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
+        .control-label { font-size: 0.85rem; display: flex; align-items: center; gap: 5px; }
         
-        /* トグルスイッチ */
-        .switch { position: relative; display: inline-block; width: 46px; height: 22px; min-width: 46px; }
+        .switch { position: relative; display: inline-block; width: 46px; height: 22px; flex-shrink: 0; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3e3e42; transition: .2s; border-radius: 22px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 4px; bottom: 4px; background-color: white; transition: .2s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3e3e42; transition: .3s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; }
         input:checked + .slider { background-color: #ffca28; }
         input:checked + .slider:before { transform: translateX(24px); }
         
-        /* 入力欄とボタンの共通化 */
-        .input-box { width: 100%; padding: 6px 10px; background: #121214; border: 1px solid #29292e; color: #e1e1e6; border-radius: 6px; font-size: 0.8rem; text-align: center; }
-        .action-btn { width: 100%; padding: 8px; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: 0.15s; }
-        .btn-apply { background: #3e3e42; color: white; }
-        .btn-apply:hover { background: #4e4e54; }
-        .btn-reverse { background: #e040fb; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-        .btn-reverse:hover { background: #e060ff; box-shadow: 0 0 10px rgba(224,64,251,0.4); }
+        .code-input-container { display: flex; gap: 5px; width: 100%; margin-top: 5px; }
+        .code-input { flex: 1; background: #121214; border: 1px solid #29292e; border-radius: 4px; padding: 4px 8px; color: #e1e1e6; font-size: 0.8rem; }
+        .code-btn { background: #3e3e42; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold; }
+        .code-btn:hover { background: #4f4f54; }
         
-        /* メインカウンター表示 */
-        #score-display { text-align: center; margin-bottom: 25px; z-index: 5; }
-        #coin-count { font-size: 3rem; font-weight: bold; color: #ffca28; text-shadow: 0 4px 12px rgba(255,202,40,0.15); }
-        #cps-count { font-size: 1.1rem; color: #a8a8b3; margin-top: 6px; font-weight: 500; }
-        #reverse-count-display { font-size: 0.9rem; color: #e040fb; margin-top: 4px; font-weight: bold; }
+        .reverse-btn { width: 100%; padding: 6px; background: #d43f3f; border: none; color: white; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; margin-top: 5px; }
+        .reverse-btn:hover { background: #e64c4c; }
+        .reverse-stat { font-size: 0.75rem; color: #a8a8b3; text-align: center; width: 100%; }
+
+        #score-display { text-align: center; margin-bottom: 30px; z-index: 5; }
+        #coin-count { font-size: 3rem; font-weight: bold; color: #ffca28; text-shadow: 0 4px 10px rgba(255,202,40,0.2); }
+        #cps-count { font-size: 1.2rem; color: #a8a8b3; margin-top: 5px; }
         
-        /* 立体感のある影付きの黄色い丸 */
-        #coin-target { 
-            width: 240px; 
-            height: 240px; 
-            background: #ffca28; 
-            border-radius: 50%; 
-            cursor: pointer; 
-            transition: transform 0.05s, box-shadow 0.1s; 
-            position: relative; 
-            z-index: 5; 
-            /* 滑らかな立体感のある影 */
-            box-shadow: 
-                0 15px 35px rgba(0, 0, 0, 0.45), 
-                inset 0 -12px 24px rgba(0,0,0,0.25), 
-                inset 0 12px 24px rgba(255,255,255,0.45); 
-        }
-        #coin-target:active { 
-            transform: scale(0.95); 
-            box-shadow: 
-                0 6px 15px rgba(0, 0, 0, 0.4), 
-                inset 0 -6px 12px rgba(0,0,0,0.25), 
-                inset 0 6px 12px rgba(255,255,255,0.45); 
-        }
+        /* 影付きの黄色い丸 */
+        #coin-target { width: 240px; height: 240px; background: #ffca28; border-radius: 50%; cursor: pointer; transition: transform 0.05s, box-shadow 0.1s; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 -10px 20px rgba(0,0,0,0.2), inset 0 10px 20px rgba(255,255,255,0.4); position: relative; z-index: 5; }
+        #coin-target:active { transform: scale(0.96); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4), inset 0 -5px 10px rgba(0,0,0,0.2), inset 0 5px 10px rgba(255,255,255,0.4); }
         
-        /* タブシステム */
+        /* 右パネル、タブ、ショップ、ガチャ */
         .tab-menu { display: flex; background: #1e1e24; border-bottom: 2px solid #29292e; }
-        .tab-btn { flex: 1; padding: 14px; background: none; border: none; color: #a8a8b3; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+        .tab-btn { flex: 1; padding: 15px; background: none; border: none; color: #a8a8b3; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.95rem; }
         .tab-btn.active { color: #ffca28; background: #121214; border-bottom: 3px solid #ffca28; }
-        
-        /* パネルコンテンツ（小さめのスクロールUI） */
         .panel-content { flex: 1; overflow-y: auto; padding: 15px; display: none; }
         .panel-content.active { display: block; }
-        .section-title { font-size: 0.8rem; color: #ffca28; margin: 15px 0 8px 0; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #29292e; padding-bottom: 4px; }
         
-        /* スマートに小さくしたショップアイテム */
-        .shop-item { display: flex; align-items: center; background: #1e1e24; padding: 6px 10px; margin-bottom: 6px; border-radius: 6px; border: 1px solid #29292e; cursor: pointer; transition: 0.15s; }
+        .section-title { font-size: 0.85rem; color: #ffca28; margin: 15px 0 8px 0; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #29292e; padding-bottom: 3px; display: flex; justify-content: space-between; }
+        
+        /* ちっちゃいショップUI */
+        .shop-item { display: flex; align-items: center; background: #1e1e24; padding: 6px 10px; margin-bottom: 6px; border-radius: 50px 6px 6px 50px; border: 1px solid #29292e; cursor: pointer; transition: 0.15s; }
         .shop-item:hover { background: #29292e; border-color: #3e3e42; }
         .shop-item.disabled { opacity: 0.4; cursor: not-allowed; }
-        .item-icon { font-size: 1.2rem; margin-right: 10px; }
-        .item-info { flex: 1; }
-        .item-name { font-size: 0.8rem; font-weight: bold; color: #e1e1e6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+        .item-icon { width: 28px; height: 28px; background: #29292e; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-right: 10px; flex-shrink: 0; }
+        .item-info { flex: 1; min-width: 0; }
+        .item-name { font-size: 0.8rem; font-weight: bold; color: #e1e1e6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .item-cost { font-size: 0.7rem; color: #ffca28; margin-top: 1px; }
-        .item-count { font-size: 1rem; font-weight: bold; color: #7159c1; margin-left: 10px; }
+        .item-count { font-size: 1rem; font-weight: bold; color: #7159c1; margin-left: 10px; flex-shrink: 0; }
         
-        /* ガチャセクション */
+        /* ガチャUI */
         #gacha-box { background: #1e1e24; border-radius: 8px; padding: 15px; text-align: center; border: 1px solid #29292e; margin-bottom: 15px; }
-        .gacha-btn-group { display: flex; gap: 8px; margin-top: 10px; }
-        .g-btn { flex: 1; padding: 10px; border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: 0.15s; }
-        #gacha-single-btn { background: #7159c1; }
-        #gacha-single-btn:hover { background: #8267e3; }
-        #gacha-multi-btn { background: #311b92; border: 1px solid #512da8; }
-        #gacha-multi-btn:hover { background: #371c9e; box-shadow: 0 0 8px rgba(49,27,146,0.5); }
-        #gacha-result-list { margin-top: 12px; max-height: 120px; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 6px; padding: 5px; font-size: 0.8rem; text-align: left; border: 1px solid #29292e; display: none; }
-        .gacha-res-line { padding: 3px 6px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #ffca28; font-weight: 500; }
+        .gacha-btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .g-btn { flex: 1; padding: 10px; border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; }
+        #gacha-btn-single { background: #4a90e2; }
+        #gacha-btn-single:hover { background: #5ca1f5; }
+        #gacha-btn-multi { background: #7159c1; }
+        #gacha-btn-multi:hover { background: #8267e3; }
+        #gacha-result { margin-top: 12px; font-size: 0.85rem; font-weight: bold; min-height: 40px; color: #ffca28; background: #121214; border-radius: 4px; padding: 8px; text-align: left; overflow-y: auto; max-height: 120px; line-height: 1.4; }
         
-        /* インベントリ格子レイアウト */
-        .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 8px; margin-top: 8px; }
-        .pet-card { background: #1e1e24; border: 1px solid #29292e; border-radius: 6px; padding: 8px; text-align: center; cursor: pointer; position: relative; transition: 0.15s; }
+        /* インベントリ */
+        .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; margin-top: 10px; }
+        .pet-card { background: #1e1e24; border: 1px solid #29292e; border-radius: 6px; padding: 8px; text-align: center; cursor: pointer; position: relative; transition: 0.2s; display: flex; flex-direction: column; align-items: center; }
         .pet-card:hover { border-color: #7159c1; }
-        .pet-card.equipped { border-color: #ffca28; background: rgba(255,202,40,0.04); }
-        .pet-badge { position: absolute; top: 2px; right: 4px; font-size: 0.6rem; font-weight: bold; color: #ffca28; display: none; }
+        .pet-card.equipped { border-color: #ffca28; background: rgba(255,202,40,0.05); box-shadow: 0 0 8px rgba(255,202,40,0.1); }
+        .pet-badge { position: absolute; top: 4px; left: 4px; font-size: 0.65rem; font-weight: bold; color: #ffca28; background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 3px; display: none; }
         .pet-card.equipped .pet-badge { display: block; }
-        .pet-card-icon { font-size: 1.6rem; margin-bottom: 4px; }
-        .pet-card-name { font-size: 0.7rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e1e1e6; }
-        .pet-card-bonus { font-size: 0.6rem; color: #a8a8b3; margin-top: 1px; }
-        .pet-card-count { position: absolute; bottom: 2px; right: 4px; font-size: 0.65rem; font-weight: bold; color: #7159c1; background: rgba(0,0,0,0.4); padding: 1px 3px; border-radius: 3px; }
+        .pet-qty { position: absolute; top: 4px; right: 4px; font-size: 0.65rem; font-weight: bold; color: #a8a8b3; background: rgba(0,0,0,0.4); padding: 1px 4px; border-radius: 3px; }
+        .pet-card-icon { font-size: 1.6rem; margin: 4px 0; }
+        .pet-card-name { font-size: 0.75rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; color: #e1e1e6; }
+        .pet-card-rarity { font-size: 0.6rem; font-weight: bold; text-transform: uppercase; margin-top: 2px; }
+        .pet-card-bonus { font-size: 0.65rem; color: #a8a8b3; margin-top: 2px; }
         
-        /* 数字浮遊エフェクト */
-        .floating-text { position: absolute; font-weight: bold; font-size: 1.3rem; color: #ffca28; pointer-events: none; animation: floatUp 0.7s ease-out forwards; z-index: 100; text-shadow: 0 2px 5px rgba(0,0,0,0.6); }
-        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-90px) scale(0.85); opacity: 0; } }
-        
-        /* ゴールデンクッキーシステム */
-        #buff-display { position: absolute; top: 20px; right: 20px; background: rgba(255,202,40,0.15); border: 1px solid #ffca28; padding: 6px 12px; border-radius: 6px; color: #ffca28; font-weight: bold; font-size: 0.85rem; display: none; z-index: 50; }
-        #gcookie { position: absolute; font-size: 3rem; cursor: pointer; z-index: 80; display: none; filter: drop-shadow(0 0 8px #ffca28); user-select: none; }
+        /* レア度別テキスト色 */
+        .rarity-common { color: #a8a8b3; }
+        .rarity-rare { color: #4a90e2; }
+        .rarity-epic { color: #ab47bc; }
+        .rarity-legendary { color: #ffca28; }
+        .rarity-mythic { color: #ec407a; }
+        .rarity-exotic { color: #26a69a; }
+        .rarity-secret { color: #66bb6a; font-style: italic; }
+        .rarity-eternal { color: #26c6da; text-shadow: 0 0 4px rgba(38,198,218,0.4); }
+        .rarity-og { color: #ff7043; font-weight: 900; text-shadow: 0 0 6px rgba(255,112,67,0.5); }
+
+        /* エフェクト */
+        .floating-text { position: absolute; font-weight: bold; font-size: 1.3rem; color: #ffca28; pointer-events: none; animation: floatUp 0.7s ease-out forwards; z-index: 100; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(0.8); opacity: 0; } }
+        #buff-display { position: absolute; top: 20px; right: 20px; background: rgba(255,202,40,0.15); border: 1px solid #ffca28; padding: 6px 12px; border-radius: 6px; color: #ffca28; font-weight: bold; display: none; z-index: 50; font-size: 0.85rem; }
+        #gcookie { position: absolute; font-size: 3rem; cursor: pointer; z-index: 80; display: none; animation: pulse 1s infinite alternate; filter: drop-shadow(0 0 8px #ffca28); }
+        @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.15); } }
     </style>
 </head>
 <body>
 
     <div id="left-panel">
-        <!-- 左上統合管理パネル -->
         <div id="control-zone">
-            <div class="control-item">
-                <span id="ac-icon">🤖 オート</span>
+            <!-- オートクリッカー -->
+            <div class="control-row">
+                <span class="control-label" id="label-ac">🤖 オートクリッカー</span>
                 <label class="switch">
                     <input type="checkbox" id="autoclicker-toggle">
                     <span class="slider"></span>
                 </label>
             </div>
-            <div style="border-top: 1px solid #29292e; margin: 2px 0;"></div>
-            <div class="control-item" style="flex-direction: column; align-items: flex-start; gap: 4px;">
-                <span id="label-code" style="color: #a8a8b3;">🔑 暗号コードを入力:</span>
-                <input type="text" id="secret-code-input" class="input-box" placeholder="code...">
-                <button class="action-btn btn-apply" onclick="checkSecretCode()">適用</button>
+            
+            <!-- コードシステム -->
+            <div class="code-input-container">
+                <input type="text" class="code-input" id="secret-code" placeholder="コード入力...">
+                <button class="code-btn" onclick="applyCode()">適用</button>
             </div>
-            <div style="border-top: 1px solid #29292e; margin: 2px 0;"></div>
-            <div class="control-item" style="flex-direction: column; gap: 4px;">
-                <button class="action-btn btn-reverse" onclick="triggerReverse()">🌀 リバース (再生)</button>
-                <span id="reverse-bonus-hint" style="font-size: 0.65rem; color: #e040fb; text-align: center; width: 100%;">ガチャ運ブースト付与</span>
-            </div>
+            
+            <!-- リバースシステム -->
+            <button class="reverse-btn" onclick="triggerReverse()" id="btn-reverse">🌀 リバース再生</button>
+            <div class="reverse-stat" id="reverse-count-display">リバース回数: 0 (幸運ブースト: +0%)</div>
         </div>
 
         <div id="buff-display">🎰 ブースト: 5x!! (<span id="buff-time">15</span>s)</div>
@@ -145,7 +130,6 @@
         <div id="score-display">
             <div id="coin-count">0</div>
             <div id="cps-count">毎秒: 0 | クリック: 1</div>
-            <div id="reverse-count-display">リバース回数: 0</div>
         </div>
 
         <div id="coin-target"></div>
@@ -153,39 +137,42 @@
 
     <div id="right-panel">
         <div class="tab-menu">
-            <button class="tab-btn active" id="tab-shop-btn" onclick="switchTab('shop')">🛒 ショップ</button>
-            <button class="tab-btn" id="tab-gacha-btn" onclick="switchTab('gacha')">🥚 ガチャ & ペット</button>
+            <button class="tab-btn active" id="tab-btn-shop" onclick="switchTab('shop')">🛒 ショップ</button>
+            <button class="tab-btn" id="tab-btn-gacha" onclick="switchTab('gacha')">🥚 ガチャ & ペット</button>
         </div>
 
         <!-- ショップタブ -->
         <div id="tab-shop" class="panel-content active">
-            <div class="section-title" id="title-cpc">🖱️ クリック強化アイテム</div>
+            <div class="section-title" id="title-cpc">🖱️ クリックパワー強化</div>
             <div id="cpc-list"></div>
 
-            <div class="section-title" id="title-cps">🏢 自動生産プラント施設</div>
+            <div class="section-title" id="title-cps">🏢 自動生産アセット</div>
             <div id="cps-list"></div>
         </div>
 
-        <!-- ガチャ＆ペットタブ -->
+        <!-- ガチャタブ -->
         <div id="tab-gacha" class="panel-content">
             <div id="gacha-box">
-                <h3 style="font-size: 0.9rem; font-weight: bold; color: #e1e1e6;" id="title-gacha-head">🎁 拡張ペット召喚コア</h3>
-                <p style="font-size: 0.75rem; color: #a8a8b3; margin-top: 2px;" id="gacha-cost-text">単発: 500 | 10連: 5,000 コイン</p>
+                <h3 style="font-size: 0.95rem; margin-bottom: 4px;" id="title-gacha-head">🎁 拡張レア度ペットガチャ</h3>
+                <p style="font-size: 0.75rem; color: #a8a8b3; margin-bottom: 10px;">単発: 500 | 10連: 5,000 コイン</p>
                 <div class="gacha-btn-group">
-                    <button id="gacha-single-btn" class="g-btn" onclick="rollGacha(1)">1回引く</button>
-                    <button id="gacha-multi-btn" class="g-btn" onclick="rollGacha(10)">🔥 10連ガチャ</button>
+                    <button class="g-btn" id="gacha-btn-single" onclick="rollGacha(1)">1回引く</button>
+                    <button class="g-btn" id="gacha-btn-multi" onclick="rollGacha(10)">10連ガチャ</button>
                 </div>
-                <div id="gacha-result-list"></div>
+                <div id="gacha-result">ガチャを回すとここに結果が出現します</div>
             </div>
-            <div class="section-title" id="title-inv">🎒 インベントリ (所持ペット数: 0 / 9種)</div>
+            <div class="section-title">
+                <span id="title-inv">🎒 ペットインベントリ</span>
+                <span id="pet-total-counter" style="color: #a8a8b3; font-weight: normal;">(所持: 0 / 9種)</span>
+            </div>
             <div class="inventory-grid" id="inventory-container"></div>
         </div>
     </div>
 
     <script>
-        // 固定カオス用絵文字プール
-        const poolEmojis = ['🎈','✨','🎉','🎁','🏆','🎰','🎲','🧩','🛒','💎','🪐',' UFO','🛸','🧬','🔮','⚔️','👑','🐺','🦅','🔥','🌌','🐱','🐉','🦁','🐯','🦄','🐼','🦊','🦉','🤖','💫','🎨','⚡','🌟','🍀','🍄','🚀','⚓','🧱','🎈','🔑','📦','🎐','🎐'];
-        function getRandomEmoji() { return poolEmojis[Math.floor(Math.random() * poolEmojis.length)]; }
+        // 絵文字プール（カオス化用）
+        const emojiPool = ['🎈','🎆','🎇','🧨','✨','🎉','🎊','🎋','🎍','🎎','🎏','🎐','🎑','🧧','🎀','🎁','🎫','🏆','🏅','🥇','🥈','🥉','⚽','⚾','🥎','🏀','🏐','🏈','🏉','🎾','🥏','🎳','🏏','🏑','🏓','🏸','🥊','🥋','🥅','⛳','⛸','🎣','🤿','🎽','🎿','🛷','🥌','🎯','🪀','🪁','🔮','🧿','🎮','🕹','🎰','🎲','🧩','🧸','🪅','🪆','🃏','🀄','🎴','🎭','🖼','🎨','🧵','🪡','🧶','🪢','🛒','眼鏡','🕶','🥽','🥼','🦺','👔','👕','👖','🧣','🧤','🧥','🧦','👗','👘','🥻','🩱','🩲','🩳','👙','👚','👛','👜','👝','🛍','🎒','🩴','👞','👟','🥾','🥿','👠','👡','👢','👑','Hat','🎩','🎓','🧢','🪖','⛑','📿','💄','💍','💎','📢','💥','🔥','🌟','🍀','🍄','🥑','🌶','🍕','🍔','🍟','🍿','🍩','🍪','寿司','💎','🪐','🛸','🧬','🔮','⚔️','👑'];
+        function getRandomEmoji() { return emojiPool[Math.floor(Math.random() * emojiPool.length)]; }
 
         // ゲームステート
         let game = {
@@ -193,69 +180,102 @@
             baseCpc: 1,
             reverses: 0,
             equippedPet: null,
-            ownedPets: {}, // id: count の形で個数を完全記録
+            ownedPets: {}, // { petId: count }
             upgrades: []
         };
 
         let buffMultiplier = 1;
         let buffTimer = 0;
+        let uiEmojis = {}; // 起動時に一度だけ固定される絵文字マップ
 
-        // 大ボリュームの130項目超アップグレードリスト
-        const baseUpgrades = [];
-        // クリック強化（計62個）
-        const cNames = ['プラスチックの爪','鉄の指サック','合金のマウス皮膜','レーザーセンサー','サイバネアーム','超電導フィンガー','ソニックポインター','量子クリックドライブ','時空断裂レイザー','ビッグクランチプレッサー','インフィニティガントレット','プラズマトリガー','重力子パルス','反物質タクト','暗黒物質の楔','ワームホールニードル','特異点ブレード','次元歪曲グローブ','クロノスギア','真理のポインティング','タキオンスパーク','虚空の楔','超ひもセパレータ','多元宇宙の指先','概念粉砕コア','因果律崩壊スイッチ','神聖契約のペン','終焉マニフェスト','虚無の支配権','究極特異点「零」'];
-        for(let i=0; i<62; i++) {
-            let name = cNames[i] || `ハイパークリック粒子 Ver.${i+1}`;
-            baseUpgrades.push({
-                id: `c${i+1}`,
-                name: name,
-                cost: 15 * Math.pow(1.65, i),
+        // 完全ユニーク名アップグレードリスト（クリック強化60個＋自動生産60個 ＝ 計120個の大増量）
+        const rawUpgrades = [
+            // --- クリック強化 (c1 〜 c60) ---
+            { id: 'c1', name: 'プラスチックの指サック', cost: 15, type: 'cpc', power: 1 },
+            { id: 'c2', name: '鉄製高反発マウスソール', cost: 120, type: 'cpc', power: 5 },
+            { id: 'c3', name: '真鍮のキー型フィンガー', cost: 800, type: 'cpc', power: 25 },
+            { id: 'c4', name: 'チタン合金クリックシェル', cost: 4500, type: 'cpc', power: 140 },
+            { id: 'c5', name: 'サイバネティクス神経接続', cost: 22000, type: 'cpc', power: 750 },
+            { id: 'c6', name: '超電導サーキットフィンガー', cost: 150000, type: 'cpc', power: 4200 },
+            { id: 'c7', name: 'ソニック光速ポインター', cost: 1200000, type: 'cpc', power: 25000 },
+            { id: 'c8', name: '量子もつれクリックドライブ', cost: 30000000, type: 'cpc', power: 180000 },
+            { id: 'c9', name: '時空断裂プラズマレイザー', cost: 650000000, type: 'cpc', power: 1200000 },
+            { id: 'c10', name: '宇宙重力ビッグクランチプレッサー', cost: 20000000000, type: 'cpc', power: 9500000 },
+            { id: 'c11', name: 'インフィニティオメガガントレット', cost: 700000000000, type: 'cpc', power: 65000000 },
+            { id: 'c12', name: '超ひも理論シンクロペン', cost: 9 * Math.pow(10,12), type: 'cpc', power: 5 * Math.pow(10,8) },
+            { id: 'c13', name: 'パラレルワールド強奪トリガー', cost: 2 * Math.pow(10,14), type: 'cpc', power: 4 * Math.pow(10,9) },
+            { id: 'c14', name: 'ダークマター凝縮ニードル', cost: 6 * Math.pow(10,15), type: 'cpc', power: 3 * Math.pow(10,10) },
+            { id: 'c15', name: '反物質タキオンスパーク', cost: 1 * Math.pow(10,17), type: 'cpc', power: 2 * Math.pow(10,11) },
+            { id: 'c16', name: '特異点粉砕ブレードコア', cost: 4 * Math.pow(10,18), type: 'cpc', power: 1.5 * Math.pow(10,12) },
+            { id: 'c17', name: '全知全能の絶対真理システム', cost: 9 * Math.pow(10,19), type: 'cpc', power: 1 * Math.pow(10,13) },
+            { id: 'c18', name: '次元歪曲マルチバースエッジ', cost: 3 * Math.pow(10,21), type: 'cpc', power: 8 * Math.pow(10,13) },
+            { id: 'c19', name: 'クロノス終焉クロックギヤ', cost: 8 * Math.pow(10,22), type: 'cpc', power: 7 * Math.pow(10,14) },
+            { id: 'c20', name: '神聖契約のエンハンスドペン', cost: 2 * Math.pow(10,24), type: 'cpc', power: 6 * Math.pow(10,15) },
+            ...Array.from({length: 40}, (_, i) => ({
+                id: `c${21+i}`,
+                name: `極限概念破砕クリックマトリクス型-${i+1}`,
+                cost: 5 * Math.pow(10, 25 + i * 2),
                 type: 'cpc',
-                power: Math.max(1, Math.round(1 * Math.pow(1.7, i)))
-            });
-        }
-        // 自動生産施設（計70個）
-        const sNames = ['自動カーソル','コイン鋳造ミニ機','コイン農場','巨大採掘鉱山','ゴールドメガ銀行','不滅の神聖鋳造所','魔法の錬金研究所','銀河開拓宇宙船','反物質コンデンサ','タイムマシン','多次元ポータル','ビッグバン生成炉','神の領域のキッチン','ダークマター抽出機','テラフォーミングコア','エイリアンコロニー','ダイソン球発電所','超ひも共鳴炉','マルチバースコレクター','概念事象の地平線','全知の神託所','エントロピー逆転機','エーテル大気プラント','因果律タワー','無限連鎖テッセラクト','絶対存在マトリクス','オメガ星雲コンバイン','虚空の巨神像','多元宇宙ネットワーク','森羅万象ソース','究極概念「一」'];
-        for(let i=0; i<70; i++) {
-            let name = sNames[i] || `コズミック生産セクター No.${i+1}`;
-            baseUpgrades.push({
-                id: `s${i+1}`,
-                name: name,
-                cost: 20 * Math.pow(1.68, i),
+                power: 4 * Math.pow(10, 16 + i * 2)
+            })),
+
+            // --- 自動生産施設 (s1 〜 s60) ---
+            { id: 's1', name: '全自動木製カーソル', cost: 15, type: 'cps', power: 0.2 },
+            { id: 's2', name: '小型低出力鋳造ミニ機', cost: 100, type: 'cps', power: 1 },
+            { id: 's3', name: '水耕栽培型コイン農場', cost: 1100, type: 'cps', power: 8 },
+            { id: 's4', name: '地下1万メートル巨大鉱山', cost: 12000, type: 'cps', power: 47 },
+            { id: 's5', name: 'スイス連邦インフレメガ銀行', cost: 130000, type: 'cps', power: 260 },
+            { id: 's6', name: '超高熱不滅神聖鋳造所', cost: 1400000, type: 'cps', power: 1400 },
+            { id: 's7', name: '賢者の石錬金術研究所', cost: 20000000, type: 'cps', power: 7800 },
+            { id: 's8', name: '大マゼラン銀河開拓宇宙船', cost: 330000000, type: 'cps', power: 44000 },
+            { id: 's9', name: '超空間反物質コンデンサ', cost: 5100000000, type: 'cps', power: 260000 },
+            { id: 's10', name: '因果律超越タイムマシン', cost: 75000000000, type: 'cps', power: 1600000 },
+            { id: 's11', name: '異次元多次元接続ポータル', cost: 1000000000000, type: 'cps', power: 10000000 },
+            { id: 's12', name: '創世記ビッグバン生成炉', cost: 14000000000000, type: 'cps', power: 65000000 },
+            { id: 's13', name: 'ゼウスの神の領域キッチン', cost: 200000000000000, type: 'cps', power: 430000000 },
+            { id: 's14', name: 'クォークシンクロナイザー', cost: 3500000000000000, type: 'cps', power: 3200000000 },
+            { id: 's15', name: '惑星改造テラフォーミングコア', cost: 5 * Math.pow(10,16), type: 'cps', power: 24000000000 },
+            { id: 's16', name: 'ゼータ星系エイリアンコロニー', cost: 7 * Math.pow(10,17), type: 'cps', power: 180000000000 },
+            { id: 's17', name: '恒星包囲ダイソン球発電所', cost: 1 * Math.pow(10,19), type: 'cps', power: 1300000000000 },
+            { id: 's18', name: '虚空から迫るダークマター波動', cost: 2.5 * Math.pow(10,20), type: 'cps', power: 10 * Math.pow(10,12) },
+            { id: 's19', name: '超ひも多元宇宙ジェネレーター', cost: 5 * Math.pow(10,21), type: 'cps', power: 8 * Math.pow(10,13) },
+            { id: 's20', name: '世界線収束コントロールタワー', cost: 9 * Math.pow(10,22), type: 'cps', power: 7 * Math.pow(10,14) },
+            ...Array.from({length: 40}, (_, i) => ({
+                id: `s${21+i}`,
+                name: `永久連鎖オメガエントロピー魔導炉-${i+1}`,
+                cost: 6 * Math.pow(10, 24 + i * 2),
                 type: 'cps',
-                power: 0.2 * Math.pow(1.72, i)
-            });
-        }
-
-        // カオス絵文字を起動時に完全固定定義
-        const staticIcons = {};
-        baseUpgrades.forEach(u => { staticIcons[u.id] = getRandomEmoji(); });
-
-        // 全9段階の拡張ペットレア度定義
-        const petPool = [
-            { id: 'p1', name: 'シャドウファング', rarity: 'Common', bonusType: 'cpc', value: 3, icon: '🐺' },
-            { id: 'p2', name: 'エアロウィング', rarity: 'Common', bonusType: 'cps', value: 8, icon: '🦅' },
-            { id: 'p3', name: 'パイロコア', rarity: 'Rare', bonusType: 'cpc', value: 20, icon: '🔥' },
-            { id: 'p4', name: 'ヴォイドウォーカー', rarity: 'Rare', bonusType: 'cps', value: 65, icon: '🌌' },
-            { id: 'p5', name: 'クロノスキャット', rarity: 'Epic', bonusType: 'all', value: 1.4, icon: '🐱' },
-            { id: 'p6', name: 'オメガ・ドラグーン', rarity: 'Legendary', bonusType: 'all', value: 2.2, icon: '🐉' },
-            { id: 'p7', name: 'コズミック・フェニックス', rarity: 'Mythic', bonusType: 'all', value: 3.5, icon: '☄️' },
-            { id: 'p8', name: 'ギャラクシー・リヴァイアサン', rarity: 'Exotic', bonusType: 'all', value: 5.0, icon: '🪐' },
-            { id: 'p9', name: 'カオス・マトリクス', rarity: 'Secret', bonusType: 'all', value: 8.5, icon: '🎭' },
-            { id: 'p10', name: 'インフィニティ・アイ', rarity: 'Eternal', bonusType: 'all', value: 15.0, icon: '👁️' },
-            { id: 'p11', name: 'ファウンダー・クラウン', rarity: 'OG', bonusType: 'all', value: 50.0, icon: '👑' }
+                power: 5 * Math.pow(10, 15 + i * 2)
+            }))
         ];
-        
-        // 残りのUIカオス表示用固定文字
-        const uiIcons = { ac: getRandomEmoji(), cpcT: getRandomEmoji(), cpsT: getRandomEmoji(), gachaH: getRandomEmoji(), invT: getRandomEmoji(), shopB: getRandomEmoji(), gachaB: getRandomEmoji() };
 
+        // 全9段階レア度ペット定義
+        const petPool = [
+            { id: 'p1', name: 'シャドウファング', rarity: 'Common', bonusType: 'cpc', value: 2, rarityClass: 'rarity-common' },
+            { id: 'p2', name: 'エアロウィング', rarity: 'Common', bonusType: 'cps', value: 5, rarityClass: 'rarity-common' },
+            { id: 'p3', name: 'パイロコア', rarity: 'Rare', bonusType: 'cpc', value: 12, rarityClass: 'rarity-rare' },
+            { id: 'p4', name: 'ヴォイドウォーカー', rarity: 'Rare', bonusType: 'cps', value: 60, rarityClass: 'rarity-rare' },
+            { id: 'p5', name: 'クロノスキャット', rarity: 'Epic', bonusType: 'all', value: 1.4, rarityClass: 'rarity-epic' },
+            { id: 'p6', name: 'ボルトハウンド', rarity: 'Epic', bonusType: 'cpc', value: 250, rarityClass: 'rarity-epic' },
+            { id: 'p7', name: 'オメガ・ドラグーン', rarity: 'Legendary', bonusType: 'all', value: 2.5, rarityClass: 'rarity-legendary' },
+            { id: 'p8', name: 'ヴァルキリーブレード', rarity: 'Legendary', bonusType: 'cps', value: 8000, rarityClass: 'rarity-legendary' },
+            { id: 'p9', name: 'コズミックフェニックス', rarity: 'Mythic', bonusType: 'all', value: 4.0, rarityClass: 'rarity-mythic' },
+            { id: 'p10', name: 'ギャラクシーリヴァイアサン', rarity: 'Exotic', bonusType: 'cpc', value: 500000, rarityClass: 'rarity-exotic' },
+            { id: 'p11', name: 'カオスマトリクス', rarity: 'Secret', bonusType: 'all', value: 7.0, rarityClass: 'rarity-secret' },
+            { id: 'p12', name: 'インフィニティアイ', rarity: 'Eternal', bonusType: 'all', value: 15.0, rarityClass: 'rarity-eternal' },
+            { id: 'p13', name: 'ファウンダー・クラウン', rarity: 'OG', bonusType: 'all', value: 50.0, rarityClass: 'rarity-og' }
+        ];
+
+        // 数のフォーマット表示（Duodecillion [Du] を超えて無限まで対応）
         function formatNumber(num) {
             if (num < 1000) return num.toFixed(1).replace('.0', '');
             const suffixes = [
                 { v: 1e3, s: 'K' }, { v: 1e6, s: 'M' }, { v: 1e9, s: 'B' }, { v: 1e12, s: 'T' },
                 { v: 1e15, s: 'Qa' }, { v: 1e18, s: 'Qi' }, { v: 1e21, s: 'Sx' }, { v: 1e24, s: 'Sp' },
                 { v: 1e27, s: 'Oc' }, { v: 1e30, s: 'No' }, { v: 1e33, s: 'Dc' }, { v: 1e36, s: 'Un' },
-                { v: 1e39, s: 'Du' }, { v: 1e42, s: 'Tr' }, { v: 1e45, s: 'QaD' }, { v: 1e48, s: 'QiD' }
+                { v: 1e39, s: 'Du' }, { v: 1e42, s: 'Tr' }, { v: 1e45, s: 'QaD' }, { v: 1e48, s: 'QiD' },
+                { v: 1e51, s: 'SxD' }, { v: 1e54, s: 'SpD' }, { v: 1e57, s: 'OcD' }, { v: 1e60, s: 'NoD' },
+                { v: 1e63, s: 'Vg' }, { v: 1e66, s: 'UnV' }, { v: 1e69, s: 'DuV' }, { v: 1e72, s: 'TrV' }
             ];
             for (let i = suffixes.length - 1; i >= 0; i--) {
                 if (num >= suffixes[i].v) {
@@ -265,56 +285,71 @@
             return num.toExponential(2);
         }
 
+        // 初期化処理
         function initGame() {
-            game.upgrades = baseUpgrades.map(u => ({ ...u, count: 0 }));
+            // 固定用ランダム絵文字の割り振りを1度だけ行う
+            uiEmojis['ac'] = getRandomEmoji();
+            uiEmojis['cpc'] = getRandomEmoji();
+            uiEmojis['cps'] = getRandomEmoji();
+            uiEmojis['gacha'] = getRandomEmoji();
+            uiEmojis['inv'] = getRandomEmoji();
+            uiEmojis['g_cookie'] = getRandomEmoji();
+
+            rawUpgrades.forEach(u => { uiEmojis[u.id] = getRandomEmoji(); });
+            petPool.forEach(p => { uiEmojis[p.id] = getRandomEmoji(); });
+
+            game.upgrades = rawUpgrades.map(u => ({ ...u, count: 0 }));
+            
+            // ローカルストレージからのロード試行（全自動セーブデータがある場合）
+            loadGameOnLaunch();
+            
             renderShop();
-            loadGameOnStart();
             renderInventory();
             updateUI();
         }
 
         function getCpc() {
             let cpc = game.baseCpc;
-            game.upgrades.filter(u => u.type === 'cpc').forEach(u => { cpc += u.power * u.count; });
+            game.upgrades.filter(u => u.type === 'cpc').forEach(u => {
+                cpc += u.power * u.count;
+            });
             if (game.equippedPet) {
                 const pet = petPool.find(p => p.id === game.equippedPet);
                 if (pet && pet.bonusType === 'cpc') cpc += pet.value;
                 if (pet && pet.bonusType === 'all') cpc *= pet.value;
             }
-            // リバースボーナス (1回につきクリック10%アップ)
-            cpc *= (1 + game.reverses * 0.1);
             return cpc * buffMultiplier;
         }
 
         function getCps() {
             let cps = 0;
-            game.upgrades.filter(u => u.type === 'cps').forEach(u => { cps += u.power * u.count; });
+            game.upgrades.filter(u => u.type === 'cps').forEach(u => {
+                cps += u.power * u.count;
+            });
             if (game.equippedPet) {
                 const pet = petPool.find(p => p.id === game.equippedPet);
                 if (pet && pet.bonusType === 'cps') cps += pet.value;
                 if (pet && pet.bonusType === 'all') cps *= pet.value;
             }
-            // リバースボーナス (1回につきCPS15%アップ)
-            cps *= (1 + game.reverses * 0.15);
             return cps * buffMultiplier;
         }
 
         function updateUI() {
             document.getElementById('coin-count').innerText = formatNumber(game.coins);
-            document.getElementById('cps-count').innerText = `毎秒: ${formatNumber(getCps())} | クリック: ${formatNumber(getCpc())}`;
-            document.getElementById('reverse-count-display').innerText = `リバース回数: ${game.reverses}回`;
+            const currentCps = getCps();
+            const currentCpc = getCpc();
+            document.getElementById('cps-count').innerText = `毎秒: ${formatNumber(currentCps)} | クリック: ${formatNumber(currentCpc)}`;
 
-            // 固定カオスUI装飾
-            document.getElementById('ac-icon').innerText = `${uiIcons.ac} オート`;
-            document.getElementById('title-cpc').innerText = `${uiIcons.cpcT} クリック強化アイテム`;
-            document.getElementById('title-cps').innerText = `${uiIcons.cpsT} 自動生産プラント施設`;
-            document.getElementById('title-gacha-head').innerText = `${uiIcons.gachaH} 拡張ペット召喚コア`;
-            
-            // 所持種類のカウント算出
-            let uniqueTypes = Object.keys(game.ownedPets).length;
-            document.getElementById('title-inv').innerText = `${uiIcons.invT} インベントリ (所持ペット数: ${uniqueTypes} / ${petPool.length}種)`;
-            document.getElementById('tab-shop-btn').innerText = `${uiIcons.shopB} ショップ`;
-            document.getElementById('tab-gacha-btn').innerText = `${uiIcons.gachaB} ガチャ & ペット`;
+            // UI見出しパーツ（起動時に固定された絵文字を使用）
+            document.getElementById('label-ac').innerText = `${uiEmojis['ac']} オートクリッカー`;
+            document.getElementById('title-cpc').innerText = `${uiEmojis['cpc']} クリックパワー強化`;
+            document.getElementById('title-cps').innerText = `${uiEmojis['cps']} 自動生産アセット`;
+            document.getElementById('title-gacha-head').innerText = `${uiEmojis['gacha']} 拡張レア度ペットガチャ`;
+            document.getElementById('title-inv').innerText = `${uiEmojis['inv']} ペットインベントリ`;
+
+            // リバースボタンテキスト
+            const luckBonus = game.reverses * 25;
+            document.getElementById('reverse-count-display').innerText = `リバース回数: ${game.reverses} (幸運ブースト: +${luckBonus}%)`;
 
             game.upgrades.forEach(u => {
                 const el = document.getElementById(`item-${u.id}`);
@@ -325,6 +360,10 @@
                     el.querySelector('.item-count').innerText = u.count;
                 }
             });
+
+            // 所持種類数のカウント
+            const uniqueCount = Object.keys(game.ownedPets).length;
+            document.getElementById('pet-total-counter').innerText = `(所持: ${uniqueCount} / 9種)`;
         }
 
         function createFloatingText(text, x, y) {
@@ -347,8 +386,8 @@
                 x = e.clientX;
                 y = e.clientY;
             } else {
-                x += (Math.random() - 0.5) * 140;
-                y += (Math.random() - 0.5) * 140;
+                x += (Math.random() - 0.5) * 100;
+                y += (Math.random() - 0.5) * 100;
             }
             createFloatingText(`+${formatNumber(power)}`, x, y);
             updateUI();
@@ -356,17 +395,17 @@
 
         document.getElementById('coin-target').addEventListener('click', clickCoin);
 
-        // スペース長押しシステム
+        // スペースキー長押し自動連打システム
         let spaceInterval = null;
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
                 if (!spaceInterval) {
                     clickCoin();
-                    document.getElementById('coin-target').style.transform = 'scale(0.95)';
+                    document.getElementById('coin-target').style.transform = 'scale(0.96)';
                     spaceInterval = setInterval(() => {
                         clickCoin();
-                        document.getElementById('coin-target').style.transform = document.getElementById('coin-target').style.transform === 'scale(0.95)' ? 'scale(1)' : 'scale(0.95)';
+                        document.getElementById('coin-target').style.transform = document.getElementById('coin-target').style.transform === 'scale(0.96)' ? 'scale(1)' : 'scale(0.96)';
                     }, 50);
                 }
             }
@@ -381,14 +420,14 @@
             }
         });
 
-        // 爆速オートクリッカー (毎秒100回) ＋ 浮遊エフェクト完全対応
+        // オートクリッカー（毎秒100回の全自動ループ ＋ +1エフェクト完全連動）
         setInterval(() => {
             if (document.getElementById('autoclicker-toggle').checked) {
                 clickCoin(null);
             }
         }, 10);
 
-        // CPSタイマー加算
+        // CPSループ (0.1秒単位で精緻に加算)
         setInterval(() => {
             const cps = getCps();
             if (cps > 0) {
@@ -397,9 +436,9 @@
             }
         }, 100);
 
-        // 1秒ごとの完全全自動オートセーブ
+        // 1秒ごとの完全自動セーブ処理
         setInterval(() => {
-            saveGameStorage();
+            saveGameLocalStorage();
         }, 1000);
 
         function buyUpgrade(id) {
@@ -425,7 +464,7 @@
                 item.onclick = () => buyUpgrade(u.id);
 
                 item.innerHTML = `
-                    <div class="item-icon">${staticIcons[u.id]}</div>
+                    <div class="item-icon">${uiEmojis[u.id]}</div>
                     <div class="item-info">
                         <div class="item-name">${u.name}</div>
                         <div class="item-cost">コスト: ${formatNumber(u.cost)} コイン</div>
@@ -439,97 +478,95 @@
         }
 
         function switchTab(tab) {
-            document.getElementById('tab-shop-btn').classList.remove('active');
-            document.getElementById('tab-gacha-btn').classList.remove('active');
+            document.getElementById('tab-btn-shop').classList.remove('active');
+            document.getElementById('tab-btn-gacha').classList.remove('active');
             document.getElementById('tab-shop').classList.remove('active');
             document.getElementById('tab-gacha').classList.remove('active');
             
             if (tab === 'shop') {
-                document.getElementById('tab-shop-btn').classList.add('active');
+                document.getElementById('tab-btn-shop').classList.add('active');
                 document.getElementById('tab-shop').classList.add('active');
             } else {
-                document.getElementById('tab-gacha-btn').classList.add('active');
+                document.getElementById('tab-btn-gacha').classList.add('active');
                 document.getElementById('tab-gacha').classList.add('active');
             }
         }
 
-        // コード入力システム
-        function checkSecretCode() {
-            const input = document.getElementById('secret-code-input').value.trim();
-            if (input === 'cordelius') {
-                game.coins += 1e39; // 1 Duodecillion
-                alert('🔑 コード成功: 1 Duodecillion コインを獲得しました！');
+        // コード適用システム
+        function applyCode() {
+            const codeInput = document.getElementById('secret-code');
+            if (codeInput.value.trim() === 'cordelius') {
+                game.coins += Math.pow(10, 39); // 1 Duodecillion
+                alert('🎉 コード認証成功！ 1 Duodecillion コインをチャージしました！');
+                codeInput.value = '';
                 updateUI();
             } else {
-                alert('❌ 無効な暗号コードです。');
+                alert('❌ 無効な隠しコードです。');
             }
-            document.getElementById('secret-code-input').value = '';
         }
 
-        // リバース（再生）機能
+        // リバース（再生）転生処理
         function triggerReverse() {
-            if (game.coins >= 1e6) { // 最低1Mコインで実行可能
-                if(confirm('🌀 リバース（再生）を行いますか？\n所持金と施設がリセットされますが、リバース回数が+1され、永続ブーストと「ガチャ運」が超大幅アップします！')) {
+            if (game.coins >= 1000000) { // 最低1Mから転生可能
+                if (confirm('🌀 リバース（再生）を行いますか？\n所持コインと施設はリセットされますが、リバース回数が増えて永続的にガチャ運が爆増します！')) {
                     game.reverses++;
                     game.coins = 0;
-                    game.upgrades.forEach((u, idx) => {
+                    game.upgrades.forEach(u => {
                         u.count = 0;
-                        u.cost = baseUpgrades[idx].cost;
+                        const original = rawUpgrades.find(o => o.id === u.id);
+                        u.cost = original.cost;
                     });
                     renderShop();
                     updateUI();
-                    alert(`🌀 再生が完了しました！現在の転生数: ${game.reverses}回 (ガチャ幸運度が爆増中！)`);
+                    alert(`🌀 リバース完了！リバース回数: ${game.reverses}回目。ガチャ確率がさらに高まりました！`);
                 }
             } else {
-                alert('❌ リバースするには最低でも 1.00M (100万) コイン以上が必要です！');
+                alert('❌ リバースするには最低 1.00M (100万) コイン必要です！');
             }
         }
 
-        // 超高確率調整＋リバース連動の9段階レア度ガチャ
+        // ガチャ確率抽選アルゴリズム (転生回数に応じて最高レアが超爆増)
         function rollGacha(times) {
             const cost = 500 * times;
-            if (game.coins >= cost) {
-                game.coins -= cost;
-                
-                const resultsContainer = document.getElementById('gacha-result-list');
-                resultsContainer.innerHTML = '';
-                resultsContainer.style.display = 'block';
-                
-                for(let t=0; t<times; t++) {
-                    // 基本確率を大幅にアッパー調整＋リバース回数による幸運度掛け算加算
-                    const luckFactor = 1 + game.reverses * 0.5;
-                    const rand = Math.random() / luckFactor;
-                    
-                    let pet;
-                    // 超激レアテーブルが出やすい確率設計
-                    if (rand > 0.65) pet = petPool[0] || petPool[1]; // Common
-                    else if (rand > 0.40) pet = petPool[2] || petPool[3]; // Rare
-                    else if (rand > 0.22) pet = petPool[4]; // Epic
-                    else if (rand > 0.12) pet = petPool[5]; // Legendary
-                    else if (rand > 0.06) pet = petPool[6]; // Mythic
-                    else if (rand > 0.03) pet = petPool[7]; // Exotic
-                    else if (rand > 0.015) pet = petPool[8]; // Secret
-                    else if (rand > 0.005) pet = petPool[9]; // Eternal
-                    else pet = petPool[10]; // OG伝説王
-
-                    // 所持個数加算カウント
-                    if (!game.ownedPets[pet.id]) {
-                        game.ownedPets[pet.id] = 1;
-                    } else {
-                        game.ownedPets[pet.id]++;
-                    }
-
-                    const line = document.createElement('div');
-                    line.className = 'gacha-res-line';
-                    line.innerText = `✨ [${pet.rarity}] ${pet.name} ${pet.icon}`;
-                    resultsContainer.appendChild(line);
-                }
-                
-                renderInventory();
-                updateUI();
-            } else {
-                alert('❌ ガチャを回すためのコインが不足しています！');
+            if (game.coins < cost) {
+                document.getElementById('gacha-result').innerText = '❌ コインが足りません！';
+                return;
             }
+            game.coins -= cost;
+
+            // リバース回数に応じた幸運補正倍率
+            const luckFactor = 1 + (game.reverses * 0.25);
+            let results = [];
+
+            for (let t = 0; t < times; t++) {
+                const r = Math.random();
+                let pet;
+
+                // 基礎確率テーブル（通常時でも超高確率アッパー調整済み）
+                // OG, Eternal, Secret, Exotic, Mythic などの割合を大幅拡張
+                if (r < 0.20 / luckFactor) pet = petPool[Math.floor(Math.random() * 2)]; // Common
+                else if (r < 0.45 / luckFactor) pet = petPool[2 + Math.floor(Math.random() * 2)]; // Rare
+                else if (r < 0.65 / luckFactor) pet = petPool[4 + Math.floor(Math.random() * 2)]; // Epic
+                else if (r < 0.80 / luckFactor) pet = petPool[6 + Math.floor(Math.random() * 2)]; // Legendary
+                else if (r < 0.88 / luckFactor) pet = petPool[8]; // Mythic
+                else if (r < 0.94 / luckFactor) pet = petPool[9]; // Exotic
+                else if (r < 0.97 / luckFactor) pet = petPool[10]; // Secret
+                else if (r < 0.99 / luckFactor) pet = petPool[11]; // Eternal
+                else pet = petPool[12]; // OG (最高レア)
+
+                // 獲得加算
+                game.ownedPets[pet.id] = (game.ownedPets[pet.id] || 0) + 1;
+                results.push(`<span class="${pet.rarityClass}">[${pet.rarity}] ${pet.name}</span>`);
+            }
+
+            if (times === 1) {
+                document.getElementById('gacha-result').innerHTML = `🎉 獲得: ${results[0]}`;
+            } else {
+                document.getElementById('gacha-result').innerHTML = `🎁 10連結果:<br>${results.join('<br>')}`;
+            }
+
+            renderInventory();
+            updateUI();
         }
 
         function togglePet(id) {
@@ -547,29 +584,30 @@
             container.innerHTML = '';
             
             petPool.forEach(pet => {
-                if (game.ownedPets[pet.id] && game.ownedPets[pet.id] > 0) {
+                const count = game.ownedPets[pet.id] || 0;
+                if (count > 0) {
                     const card = document.createElement('div');
                     card.className = `pet-card ${game.equippedPet === pet.id ? 'equipped' : ''}`;
                     card.onclick = () => togglePet(pet.id);
                     
                     let desc = pet.bonusType === 'all' ? `x${pet.value}` : `+${pet.value}`;
-                    let countLabel = game.ownedPets[pet.id] > 1 ? `<div class="pet-card-count">×${game.ownedPets[pet.id]}</div>` : '';
-                    
                     card.innerHTML = `
                         <div class="pet-badge">E</div>
-                        <div class="pet-card-icon">${pet.icon}</div>
+                        <div class="pet-qty">×${count}</div>
+                        <div class="pet-card-icon">${uiEmojis[pet.id]}</div>
                         <div class="pet-card-name">${pet.name}</div>
+                        <div class="pet-card-rarity ${pet.rarityClass}">${pet.rarity}</div>
                         <div class="pet-card-bonus">${pet.bonusType.toUpperCase()} ${desc}</div>
-                        ${countLabel}
                     `;
                     container.appendChild(card);
                 }
             });
         }
 
-        // ゴールデン星クッキー
+        // ゴールデンクッキー（ランダム発生）
         function spawnGoldenCookie() {
             const gc = document.getElementById('gcookie');
+            gc.innerText = uiEmojis['g_cookie'];
             gc.style.display = 'block';
             gc.style.left = `${Math.random() * 60 + 20}%`;
             gc.style.top = `${Math.random() * 60 + 20}%`;
@@ -580,9 +618,10 @@
                 buffTimer = 15;
                 document.getElementById('buff-display').style.display = 'block';
             };
+
             setTimeout(() => { gc.style.display = 'none'; }, 8000);
         }
-        setInterval(() => { if (Math.random() < 0.25) spawnGoldenCookie(); }, 25000);
+        setInterval(() => { if (Math.random() < 0.2) spawnGoldenCookie(); }, 20000);
 
         setInterval(() => {
             if (buffTimer > 0) {
@@ -595,25 +634,24 @@
             }
         }, 1000);
 
-        // 暗黙ストレージ入出力システム
-        function saveGameStorage() {
-            localStorage.setItem('cc_auto_save_v3', JSON.stringify({
+        // オートセーブストレージ入出力
+        function saveGameLocalStorage() {
+            const saveData = {
                 coins: game.coins,
-                baseCpc: game.baseCpc,
                 reverses: game.reverses,
                 equippedPet: game.equippedPet,
                 ownedPets: game.ownedPets,
                 counts: game.upgrades.map(u => ({ id: u.id, count: u.count, cost: u.cost }))
-            }));
+            };
+            localStorage.setItem('coin_clicker_autosave_v3', JSON.stringify(saveData));
         }
 
-        function loadGameOnStart() {
-            const raw = localStorage.getItem('cc_auto_save_v3');
+        function loadGameOnLaunch() {
+            const raw = localStorage.getItem('coin_clicker_autosave_v3');
             if (raw) {
                 try {
                     const data = JSON.parse(raw);
                     game.coins = data.coins || 0;
-                    game.baseCpc = data.baseCpc || 1;
                     game.reverses = data.reverses || 0;
                     game.equippedPet = data.equippedPet || null;
                     game.ownedPets = data.ownedPets || {};
@@ -627,8 +665,9 @@
                             }
                         });
                     }
-                    renderShop();
-                } catch(e) { console.error("データ破損のためロードをスキップしました", e); }
+                } catch (e) {
+                    console.error("セーブデータの復元に失敗しました", e);
+                }
             }
         }
 
